@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # 定义在图中写字的函数
     def cv2ImgAddText(img, text, left, top, textColor, textSize):
-        # textSize=10;
+        textSize=30
         if (isinstance(img, np.ndarray)):  # 判断是否OpenCV图片类型
             img = Image.fromarray(cv.cvtColor(img, cv.COLOR_BGR2RGB))
         # 创建一个可以在给定图像上绘图的对象
