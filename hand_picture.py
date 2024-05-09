@@ -2,6 +2,7 @@ import os
 import mediapipe as mp
 import cv2 as cv
 import numpy as np
+import math
 from PIL import Image, ImageDraw, ImageFont
 if __name__ == "__main__":
     # 图片文件夹路径
@@ -34,6 +35,22 @@ if __name__ == "__main__":
         # 转换回OpenCV格式
         return cv.cvtColor(np.asarray(img), cv.COLOR_RGB2BGR)
 
+    points = []
+    # 回调函数，用于获取鼠标点击事件的像素坐标
+    def click_event(event, x, y, flags, param):
+        if event == cv.EVENT_LBUTTONDOWN:
+            # 在点击位置绘制一个小圆点
+            cv.circle(resized_img, (x, y), 5, (0, 0, 255), -1)
+            # 输出点击位置的像素坐标
+            print("Pixel coordinates (x, y):", x, ",", y)
+            # 将点击位置的像素坐标记录到列表中
+            points.append((x, y))
+            # 更新图像显示
+            cv.imshow("Resized Image", resized_img)
+            # 如果记录的点达到21个，则结束程序
+            if len(points) == 12:
+                cv.destroyAllWindows()
+
     # 遍历文件夹中的所有图片文件
     for filename in os.listdir(folder_path):
         # 判断文件是否是图片文件（这里简单地以文件名是否以 ".jpg"、".png" 等结尾来判断）
@@ -43,6 +60,19 @@ if __name__ == "__main__":
 
             # 读取图像
             img = cv.imread(img_path)
+
+            #显示并缩放图像
+            scale_percent = 30  # 设置缩放比例
+            width = int(img.shape[1] * scale_percent / 100)
+            height = int(img.shape[0] * scale_percent / 100)
+            dim = (width, height)
+            resized_img = cv.resize(img, dim, interpolation=cv.INTER_AREA)
+            # 显示缩放后的图像
+            cv.imshow("Resized Image", resized_img)
+            # 设置鼠标点击事件的回调函数
+            cv.setMouseCallback("Resized Image", click_event)
+            cv.waitKey(0)  # 等待按下任意键
+            cv.destroyAllWindows()  # 关闭所有窗口
 
             if img is not None:
                 image_height, image_width, _ = np.shape(img)
@@ -113,6 +143,42 @@ if __name__ == "__main__":
                         cx20,cy20 = lmList[20][1],lmList[20][2]
                         img = cv2ImgAddText(img, "十宣穴5", cx20, cy20, (0,0,0), 30)
                         cv.circle(img, (cx20, int(cy20-0.1*inch)), 10, (255, 0, 255), cv.FILLED)
+
+                        #预测穴位坐标
+                        CX=[]
+                        CX.append((cx1, cy1))
+                        CX.append((cx4, int(cy4-0.1*inch)))
+                        CX.append((cx6, cy6))
+                        CX.append((cx8, int(cy8-0.1*inch)))
+                        CX.append(((3*cx9+cx0)//4, (3*cy9+cy0)//4))
+                        CX.append((cx10, cy10))
+                        CX.append((cx12, int(cy12-0.1*inch)))
+                        CX.append((cx14, cy14))
+                        CX.append((cx16, int(cy16-0.1*inch)))
+                        CX.append(((3*cx17+cx0)//4, (3*cy17+cy0)//4))
+                        CX.append((cx18, cy18))
+                        CX.append((cx20, int(cy20-0.1*inch)))
+
+                        #误差计算
+                        magnitude=[]
+                        error=[]
+                        for i,point in enumerate(points):
+                            x, y=point
+                            x=x*(10/3)
+                            y=y*(10/3)
+                            magnitude.append(math.sqrt(x**2 + y**2))
+                            error.append(math.sqrt((x-CX[i][0])**2+(y-CX[i][1])**2))
+
+                        sumError=0
+                        for i in range(12):
+                            sumError += error[i]/magnitude[i]
+                        print(points)
+                        print(CX)
+                        print(error)
+                        print(magnitude)
+                        print(sumError)
+
+
 
                         # 保存预测图片
                         output_path = os.path.join(output_folder, filename)
