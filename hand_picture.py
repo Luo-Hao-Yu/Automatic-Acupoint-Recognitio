@@ -11,6 +11,9 @@ if __name__ == "__main__":
     # 保存预测图片的文件夹路径
     output_folder = "outPutimages"  # 替换为你的输出文件夹路径
 
+    #保存人工点的穴位的文件夹路径
+    outputPerson_folder="outPersonimages"
+
     # 创建输出文件夹（如果不存在）
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -35,6 +38,7 @@ if __name__ == "__main__":
         # 转换回OpenCV格式
         return cv.cvtColor(np.asarray(img), cv.COLOR_RGB2BGR)
 
+
     points = []
     # 回调函数，用于获取鼠标点击事件的像素坐标
     def click_event(event, x, y, flags, param):
@@ -47,9 +51,15 @@ if __name__ == "__main__":
             points.append((x, y))
             # 更新图像显示
             cv.imshow("Resized Image", resized_img)
-            # 如果记录的点达到21个，则结束程序
+            # 如果记录的点达到12个，则结束程序
             if len(points) == 12:
+                output_path = os.path.join(outputPerson_folder, filename)
+                cv.imwrite(output_path, resized_img)
+                print("Saved prediction:", output_path)
                 cv.destroyAllWindows()
+
+    #误差列表
+    errorList=[]
 
     # 遍历文件夹中的所有图片文件
     for filename in os.listdir(folder_path):
@@ -176,7 +186,10 @@ if __name__ == "__main__":
                         print(CX)
                         print(error)
                         print(magnitude)
-                        print(sumError)
+                        print(sumError/12)
+                        errorList.append(sumError/12)
+                        points = []
+
 
 
 
@@ -388,4 +401,5 @@ if __name__ == "__main__":
             else:
                 print("Failed to load image:", img_path)
 
+    print(errorList)
     cv.destroyAllWindows()
